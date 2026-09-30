@@ -1,0 +1,113 @@
+@baseUrl = http://localhost:3000/api
+@token= {{login.response.body.token }}
+
+### LOGIN
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "johndoe@example.com",
+  "password": "rahasia123"
+}
+
+### 3. GET KATEGORI TANPA TOKEN (harus 401)
+GET {{baseUrl}}/kategori
+### 4. GET KATEGORI
+GET {{baseUrl}}/kategori
+Authorization: Bearer {{token}}
+### 5. POST KATEGORI
+POST {{baseUrl}}/kategori
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+ "nama_kategori": "Perangkat Audio"
+}
+### 6. PATCH KATEGORI
+PATCH {{baseUrl}}/kategori/4
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+ "nama_kategori": "Audio Visual"
+}
+### 7. DELETE KATEGORI
+DELETE {{baseUrl}}/kategori/4
+Authorization: Bearer {{token}}
+### 8. GET ASET (search + filter + pagination)
+GET {{baseUrl}}/aset?search=laptop&kategori_id=1&kondisi=Baik&page=1&limit=5
+Authorization: Bearer {{token}}
+### 9. GET ASET BY ID
+GET {{baseUrl}}/aset/1
+Authorization: Bearer {{token}}
+
+### 10. POST ASET (multipart/form-data + foto)
+POST {{baseUrl}}/aset
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=BatasForm
+--BatasForm
+Content-Disposition: form-data; name="kode_aset"
+AST-010
+--BatasForm
+Content-Disposition: form-data; name="nama_aset"
+Speaker Aktif
+--BatasForm
+Content-Disposition: form-data; name="kategori_id"
+1
+--BatasForm
+Content-Disposition: form-data; name="jumlah"
+2
+--BatasForm
+Content-Disposition: form-data; name="kondisi"
+Baik
+--BatasForm
+Content-Disposition: form-data; name="lokasi"
+Ruang Multimedia
+--BatasForm
+Content-Disposition: form-data; name="foto"; filename="speaker.jpg"
+Content-Type: image/jpeg
+< ./speaker.jpg
+--BatasForm--
+### 11. PATCH ASET (JSON, tanpa ganti foto)
+PATCH {{baseUrl}}/aset/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+ "kode_aset": "AST-001",
+ "nama_aset": "Laptop Lenovo ThinkPad T14",
+ "kategori_id": 1,
+ "jumlah": 22,
+ "kondisi": "Baik",
+ "lokasi": "Lab Komputer 1"
+}
+### 12. DELETE ASET
+DELETE {{baseUrl}}/aset/7
+Authorization: Bearer {{token}}
+### 13. GET STATISTIK
+GET {{baseUrl}}/aset/statistik
+Authorization: Bearer {{token}}
+
+
+### 11. PATCH ASET (JSON, memperbarui tanggal perolehan)
+PATCH {{baseUrl}}/aset/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "kode_aset": "AST-001",
+  "nama_aset": "Laptop Lenovo ThinkPad T14",
+  "kategori_id": 1,
+  "jumlah": 22,
+  "kondisi": "Baik",
+  "lokasi": "Lab Komputer 1",
+  "tanggal_perolehan": "2026-01-15"
+}
+
+### 15. GET ASET - Sort Jumlah DESC
+GET {{baseUrl}}/aset?sort=jumlah&order=desc
+Authorization: Bearer {{token}}
+
+### 16. GET ASET - Sort Tanggal Perolehan
+GET {{baseUrl}}/aset?sort=tanggal_perolehan&order=desc
+Authorization: Bearer {{token}}
