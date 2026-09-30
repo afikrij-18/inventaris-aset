@@ -1,3 +1,4 @@
+// frontend/src/pages/Kategori.jsx
 import { useEffect, useState } from "react";
 import {
   createKategori,
@@ -5,16 +6,23 @@ import {
   getKategori,
   updateKategori,
 } from "../services/kategoriService";
+
 const Kategori = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+
   const [nama, setNama] = useState("");
   const [editId, setEditId] = useState(null);
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // State untuk modal konfirmasi hapus
+  const [itemToDelete, setItemToDelete] = useState(null);
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -30,30 +38,42 @@ const Kategori = () => {
     }
     loadData();
   }, [refreshKey]);
+
+  // Fungsi helper untuk menampilkan toast sukses sementara (3 detik)
+  function showToast(msg) {
+    setSuccessMessage(msg);
+    setTimeout(() => {
+      setSuccessMessage("");
+    }, 3000);
+  }
+
   function resetForm() {
     setEditId(null);
     setNama("");
     setFormError("");
   }
+
   function handleEdit(item) {
     setEditId(item.id);
     setNama(item.nama_kategori);
     setFormError("");
   }
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (nama.trim().length < 3) {
       setFormError("Nama kategori minimal 3 karakter.");
       return;
     }
-
     try {
       setSaving(true);
       setFormError("");
       if (editId) {
         await updateKategori(editId, { nama_kategori: nama.trim() });
+        showToast("Kategori berhasil diperbarui!");
       } else {
         await createKategori({ nama_kategori: nama.trim() });
+        showToast("Kategori berhasil ditambahkan!");
       }
       resetForm();
       setRefreshKey((key) => key + 1);
@@ -63,13 +83,18 @@ const Kategori = () => {
       setSaving(false);
     }
   }
-  async function handleDelete(item) {
-    if (!window.confirm(`Hapus kategori "${item.nama_kategori}"?`)) return;
+
+  // Eksekusi hapus setelah dikonfirmasi lewat modal
+  async function confirmDelete() {
+    if (!itemToDelete) return;
     try {
       setActionError("");
-      await deleteKategori(item.id);
-      setItems((prev) => prev.filter((k) => k.id !== item.id));
+      await deleteKategori(itemToDelete.id);
+      setItemToDelete(null);
+      showToast("Kategori berhasil dihapus!");
+      setRefreshKey((key) => key + 1);
     } catch (err) {
+      setItemToDelete(null);
       setActionError(
         err.response?.data?.message || "Gagal menghapus kategori.",
       );
@@ -77,11 +102,21 @@ const Kategori = () => {
   }
 
   return (
-    <main className="min-h-screen bg-base-200 p-6">
+    <main className="min-h-screen bg-base-200 p-4 sm:p-6">
       <div className="mx-auto max-w-3xl space-y-6">
+        {/* Toast Notifikasi Sukses Mengambang */}
+        {successMessage && (
+          <div className="toast toast-top toast-end z-50">
+            <div className="alert alert-success text-white shadow-lg">
+              <span>{successMessage}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Card Form Tambah/Edit */}
         <section className="card bg-base-100 shadow-sm">
           <div className="card-body">
-            <h1 className="card-title">
+            <h1 className="card-title text-xl">
               {editId ? "Edit Kategori" : "Tambah Kategori"}
             </h1>
             <form
@@ -121,9 +156,11 @@ const Kategori = () => {
             </form>
           </div>
         </section>
+
+        {/* Card Daftar Kategori */}
         <section className="card bg-base-100 shadow-sm">
           <div className="card-body">
-            <h2 className="card-title">Daftar Kategori</h2>
+            <h2 className="card-title text-xl">Daftar Kategori</h2>
             {actionError && (
               <div className="alert alert-error">
                 <span>{actionError}</span>
@@ -139,34 +176,36 @@ const Kategori = () => {
               <p>Belum ada data kategori.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="table">
+                <table className="table table-zebra">
                   <thead>
                     <tr>
                       <th>No</th>
                       <th>Nama Kategori</th>
-                      <th>Action</th>
+                      <th className="text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item, index) => (
                       <tr key={item.id}>
                         <td>{index + 1}</td>
-                        <td>{item.nama_kategori}</td>
-                        <td className="flex gap-2">
-                          <button
-                            type="button"
-                            className="btn btn-warning btn-xs"
-                            onClick={() => handleEdit(item)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-error btn-xs"
-                            onClick={() => handleDelete(item)}
-                          >
-                            Delete
-                          </button>
+                        <td className="font-medium">{item.nama_kategori}</td>
+                        <td className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-warning btn-xs"
+                              onClick={() => handleEdit(item)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-error btn-xs"
+                              onClick={() => setItemToDelete(item)}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -177,7 +216,40 @@ const Kategori = () => {
           </div>
         </section>
       </div>
+
+      {/* DaisyUI Modal Konfirmasi Hapus */}
+      {itemToDelete && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">Konfirmasi Hapus</h3>
+            <p className="py-4">
+              Apakah Anda yakin ingin menghapus kategori{" "}
+              <span className="font-semibold text-error">
+                "{itemToDelete.nama_kategori}"
+              </span>
+              ?
+            </p>
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setItemToDelete(null)}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className="btn btn-error"
+                onClick={confirmDelete}
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
     </main>
   );
 };
+
 export default Kategori;

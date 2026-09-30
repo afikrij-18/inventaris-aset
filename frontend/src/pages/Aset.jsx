@@ -10,7 +10,6 @@ import { KONDISI } from "../utils/kondisi";
 const LIMIT = 5;
 
 const Aset = () => {
-  // data dari server
   const [items, setItems] = useState([]);
   const [pagination, setPagination] = useState({
     totalPages: 1,
@@ -20,8 +19,8 @@ const Aset = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // state parameter query
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [kategoriId, setKategoriId] = useState("");
@@ -31,20 +30,21 @@ const Aset = () => {
   const [page, setPage] = useState(1);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // ambil daftar kategori untuk dropdown filter (sekali saat dibuka)
+  // State untuk modal konfirmasi hapus aset
+  const [itemToDelete, setItemToDelete] = useState(null);
+
   useEffect(() => {
     async function loadKategori() {
       try {
         const response = await getKategori();
         setKategoriList(response.data);
       } catch {
-        // dropdown filter tetap kosong; daftar aset tetap bisa dipakai
+        // biarkan kosong
       }
     }
     loadKategori();
   }, []);
 
-  // debounce: tunggu 500 ms setelah user berhenti mengetik
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearch(searchInput);
@@ -53,7 +53,6 @@ const Aset = () => {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // ambil data aset setiap parameter query berubah
   useEffect(() => {
     let ignore = false;
     async function loadAset() {
@@ -85,6 +84,13 @@ const Aset = () => {
     };
   }, [search, kategoriId, kondisi, sort, order, page, refreshKey]);
 
+  function showToast(msg) {
+    setSuccessMessage(msg);
+    setTimeout(() => {
+      setSuccessMessage("");
+    }, 3000);
+  }
+
   function handleKategoriChange(e) {
     setKategoriId(e.target.value);
     setPage(1);
@@ -115,40 +121,54 @@ const Aset = () => {
     setPage(1);
   }
 
-  async function handleDelete(item) {
-    if (!window.confirm(`Hapus aset "${item.nama_aset}"?`)) return;
+  async function confirmDelete() {
+    if (!itemToDelete) return;
     try {
       setActionError("");
-      await deleteAset(item.id);
+      await deleteAset(itemToDelete.id);
+      setItemToDelete(null);
+      showToast("Aset berhasil dihapus!");
       if (items.length === 1 && page > 1) {
         setPage(page - 1);
       } else {
         setRefreshKey((key) => key + 1);
       }
     } catch (err) {
+      setItemToDelete(null);
       setActionError(err.response?.data?.message || "Gagal menghapus aset.");
     }
   }
 
   return (
-    <main className="min-h-screen bg-base-200 p-6">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen bg-base-200 p-4 sm:p-6">
+      <div className="mx-auto max-w-6xl space-y-6">
+
+        {/* Toast Notifikasi Sukses */}
+        {successMessage && (
+          <div className="toast toast-top toast-end z-50">
+            <div className="alert alert-success text-white shadow-lg">
+              <span>{successMessage}</span>
+            </div>
+          </div>
+        )}
+
         <section className="card bg-base-100 shadow-sm">
           <div className="card-body">
-            <div className="flex items-center justify-between">
-              <h1 className="card-title">Daftar Aset</h1>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h1 className="card-title text-xl">Daftar Aset</h1>
               <Link to="/aset/create" className="btn btn-primary btn-sm">
                 Tambah Aset
               </Link>
             </div>
             
-            <div className="grid gap-3 md:grid-cols-4">
+            {/* Bagian Filter Responsif */}
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 mt-2">
               <input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="input input-bordered w-full"
-                placeholder="Cari nama atau kode aset..."
+                placeholder="Cari nama/kode aset..."
               />
               <select
                 value={kategoriId}
@@ -184,25 +204,25 @@ const Aset = () => {
             </div>
 
             {actionError && (
-              <div className="alert alert-error">
+              <div className="alert alert-error mt-4">
                 <span>{actionError}</span>
               </div>
             )}
 
             {loading ? (
-              <p>Memuat data...</p>
+              <p className="mt-4">Memuat data...</p>
             ) : error ? (
-              <div className="alert alert-error">
+              <div className="alert alert-error mt-4">
                 <span>{error}</span>
               </div>
             ) : items.length === 0 ? (
-              <p>Belum ada data aset.</p>
+              <p className="mt-4">Belum ada data aset.</p>
             ) : (
-              <>
+              <div className="mt-4 space-y-4">
                 <AsetTable
                   items={items}
                   startNumber={(page - 1) * LIMIT + 1}
-                  onDelete={handleDelete}
+                  onDelete={(item) => setItemToDelete(item)}
                   sort={sort}
                   order={order}
                   onSort={handleSort}
@@ -217,13 +237,45 @@ const Aset = () => {
                     onPageChange={setPage}
                   />
                 </div>
-              </>
+              </div>
             )}
           </div>
         </section>
       </div>
+
+      {/* DaisyUI Modal Konfirmasi Hapus Aset */}
+      {itemToDelete && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">Konfirmasi Hapus Aset</h3>
+            <p className="py-4">
+              Apakah Anda yakin ingin menghapus aset{" "}
+              <span className="font-semibold text-error">
+                "{itemToDelete.nama_aset}"
+              </span>
+              ? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setItemToDelete(null)}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className="btn btn-error"
+                onClick={confirmDelete}
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
     </main>
   );
 };
 
-export default Aset;
+export default Aset; // Atau export default Aset; (sesuaikan kapitalisasi file Anda)
