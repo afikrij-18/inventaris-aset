@@ -4,6 +4,7 @@ import {
   createKategori,
   deleteKategori,
   getKategori,
+  toggleAktifKategori,
   updateKategori,
 } from "../services/kategoriService";
 
@@ -19,6 +20,7 @@ const Kategori = () => {
   const [editId, setEditId] = useState(null);
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
+  const userRole = localStorage.getItem("role");
 
   // State untuk modal konfirmasi hapus
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -97,6 +99,18 @@ const Kategori = () => {
       setItemToDelete(null);
       setActionError(
         err.response?.data?.message || "Gagal menghapus kategori.",
+      );
+    }
+  }
+  async function handleToggleAktif(id) {
+    try {
+      setActionError("");
+      await toggleAktifKategori(id);
+      showToast("Status kategori berhasil diubah!");
+      setRefreshKey((key) => key + 1);
+    } catch (err) {
+      setActionError(
+        err.response?.data?.message || "Gagal mengubah status kategori.",
       );
     }
   }
@@ -189,8 +203,28 @@ const Kategori = () => {
                       <tr key={item.id}>
                         <td>{index + 1}</td>
                         <td className="font-medium">{item.nama_kategori}</td>
+                        <td>
+                          <span className="badge badge-neutral mr-2">
+                            {item.total_aset || 0} Unit Aset
+                          </span>
+                          {/* Badge penanda status aktif/nonaktif */}
+                          <span
+                            className={`badge ${item.aktif ? "badge-success text-white" : "badge-warning"}`}
+                          >
+                            {item.aktif ? "Aktif" : "Nonaktif"}
+                          </span>
+                        </td>
                         <td className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end gap-1">
+                            {/* Tombol Toggle Aktif/Nonaktif */}
+                            <button
+                              type="button"
+                              className={`btn btn-xs ${item.aktif ? "btn-outline btn-warning" : "btn-success text-white"}`}
+                              onClick={() => handleToggleAktif(item.id)}
+                            >
+                              {item.aktif ? "Nonaktifkan" : "Aktifkan"}
+                            </button>
+
                             <button
                               type="button"
                               className="btn btn-warning btn-xs"
@@ -198,13 +232,16 @@ const Kategori = () => {
                             >
                               Edit
                             </button>
-                            <button
+                            {userRole === "admin" && (             
+
+                              <button
                               type="button"
                               className="btn btn-error btn-xs"
                               onClick={() => setItemToDelete(item)}
-                            >
+                              >
                               Delete
                             </button>
+                            )}
                           </div>
                         </td>
                       </tr>

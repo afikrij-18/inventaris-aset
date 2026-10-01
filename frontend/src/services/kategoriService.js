@@ -19,3 +19,13 @@ export async function deleteKategori(id) {
   const response = await api.delete(`/kategori/${id}`);
   return response.data;
 }
+
+export async function getKategoriAktif() {
+  const response = await api.get("/kategori?aktif=true");
+  return response.data;
+}
+
+export async function toggleAktifKategori(id) {
+  const response = await api.patch(`/kategori/${id}/toggle`);
+  return response.data;
+}

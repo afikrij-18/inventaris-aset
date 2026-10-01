@@ -142,7 +142,6 @@ const Aset = () => {
   return (
     <main className="min-h-screen bg-base-200 p-4 sm:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
-
         {/* Toast Notifikasi Sukses */}
         {successMessage && (
           <div className="toast toast-top toast-end z-50">
@@ -160,7 +159,8 @@ const Aset = () => {
                 Tambah Aset
               </Link>
             </div>
-            
+
+            {/* Bagian Filter Responsif */}
             {/* Bagian Filter Responsif */}
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 mt-2">
               <input
@@ -194,13 +194,21 @@ const Aset = () => {
                   </option>
                 ))}
               </select>
-              <button
-                type="button"
-                onClick={handleResetFilter}
-                className="btn btn-outline w-full"
-              >
-                Reset Filter
-              </button>
+
+              {/* Tombol Reset hanya tampil jika ada yang difilter/dicari */}
+              {(searchInput !== "" ||
+                kategoriId !== "" ||
+                kondisi !== "" ||
+                sort !== "createdAt" ||
+                order !== "desc") && (
+                <button
+                  type="button"
+                  onClick={handleResetFilter}
+                  className="btn btn-outline w-full"
+                >
+                  Reset Filter
+                </button>
+              )}
             </div>
 
             {actionError && (

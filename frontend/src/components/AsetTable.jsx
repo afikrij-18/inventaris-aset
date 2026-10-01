@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { API_URL } from "../services/api";
 import { kondisiBadge } from "../utils/kondisi";
 
+
 const AsetTable = ({ items, startNumber, onDelete, sort, order, onSort }) => {
+  const userRole = localStorage.getItem("role");
   // Fungsi helper untuk ikon panah sorting sederhana
   const renderSortArrow = (columnName) => {
     if (sort !== columnName) return null;
@@ -78,13 +80,16 @@ const AsetTable = ({ items, startNumber, onDelete, sort, order, onSort }) => {
                   >
                     Edit
                   </Link>
-                  <button
+                  {userRole === "admin" && (            
+
+                    <button
                     type="button"
                     className="btn btn-error btn-xs"
                     onClick={() => onDelete(item)}
-                  >
+                    >
                     Delete
                   </button>
+                  )}
                 </div>
               </td>
             </tr>

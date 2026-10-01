@@ -1,8 +1,10 @@
+// frontend/src/pages/CreateAset.jsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AsetForm from "../components/AsetForm";
 import { createAset } from "../services/asetService";
-import { getKategori } from "../services/kategoriService";
+import { getKategoriAktif } from "../services/kategoriService"; // <-- Perubahan di sini
+
 const CreateAset = () => {
   const navigate = useNavigate();
   const [kategoriList, setKategoriList] = useState([]);
@@ -10,10 +12,12 @@ const CreateAset = () => {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
   useEffect(() => {
     async function loadKategori() {
       try {
-        const response = await getKategori();
+        // Mengambil hanya kategori yang aktif saja untuk dropdown form aset
+        const response = await getKategoriAktif(); // <-- Perubahan di sini
         setKategoriList(response.data);
       } catch {
         setError("Gagal memuat data kategori.");
@@ -23,6 +27,7 @@ const CreateAset = () => {
     }
     loadKategori();
   }, []);
+
   async function handleSubmit(formData) {
     try {
       setSaving(true);
@@ -34,6 +39,7 @@ const CreateAset = () => {
       setSaving(false);
     }
   }
+
   return (
     <main className="min-h-screen bg-base-200 p-6">
       <div className="mx-auto max-w-2xl">
@@ -49,11 +55,10 @@ const CreateAset = () => {
             ) : kategoriList.length === 0 ? (
               <div className="alert alert-warning">
                 <span>
-                  Belum ada kategori.{" "}
+                  Belum ada kategori aktif.{" "}
                   <Link to="/kategori" className="link">
-                    Tambah kategori
-                  </Link>
-                  {""}
+                    Kelola kategori
+                  </Link>{" "}
                   terlebih dahulu.
                 </span>
               </div>
@@ -78,4 +83,5 @@ const CreateAset = () => {
     </main>
   );
 };
+
 export default CreateAset;

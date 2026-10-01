@@ -22,10 +22,14 @@ const User = db.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    role: {
+      type: DataTypes.ENUM("admin", "petugas"),
+      allowNull: false,
+      defaultValue: "petugas",
+    },
   },
   { tableName: "users" },
 );
-
 
 export default User;
 

@@ -1,8 +1,10 @@
+// frontend/src/pages/EditAset.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AsetForm from "../components/AsetForm";
 import { getAsetById, updateAset } from "../services/asetService";
-import { getKategori } from "../services/kategoriService";
+import { getKategoriAktif } from "../services/kategoriService"; // <-- Hanya impor yang dipakai
+
 const EditAset = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -12,12 +14,13 @@ const EditAset = () => {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
   useEffect(() => {
     async function loadData() {
       try {
         const [asetRes, kategoriRes] = await Promise.all([
           getAsetById(id),
-          getKategori(),
+          getKategoriAktif(), // Mengambil daftar kategori aktif untuk dropdown edit
         ]);
         setAset(asetRes.data);
         setKategoriList(kategoriRes.data);
@@ -25,7 +28,7 @@ const EditAset = () => {
         setError(
           err.response?.status === 404
             ? "Aset tidak ditemukan."
-            : "Gagal memuat data.",
+            : "Gagal memuat data."
         );
       } finally {
         setLoading(false);
@@ -33,6 +36,7 @@ const EditAset = () => {
     }
     loadData();
   }, [id]);
+
   async function handleSubmit(formData) {
     try {
       setSaving(true);
@@ -44,6 +48,7 @@ const EditAset = () => {
       setSaving(false);
     }
   }
+
   return (
     <main className="min-h-screen bg-base-200 p-6">
       <div className="mx-auto max-w-2xl">
@@ -78,4 +83,5 @@ const EditAset = () => {
     </main>
   );
 };
+
 export default EditAset;

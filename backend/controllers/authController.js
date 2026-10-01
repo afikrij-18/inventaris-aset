@@ -31,7 +31,9 @@ export const login = async (req, res) => {
     }
 
     // Membuat JWT token
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "24h" });
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: "24h",
+    });
 
     return res.status(200).json({
       message: "Login berhasil",
@@ -40,6 +42,7 @@ export const login = async (req, res) => {
         id: user.id,
         nama: user.nama,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
